@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>APP CAPSTONE</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<div class="container">
+    <h1>Carga de inscritos</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <form action="/upload" method="post" enctype="multipart/form-data" >
+        <input type="file" name="file" accept=".xlsx,.xls">
+        <input type="submit" name="submitButton" value="Cargar inscritos">
+    </form>
+    <form action="{{ url_for('start') }}" method="get">
+        <input type="submit" value="Iniciar Proceso">
+    </form>
+</div>
+    <!-- Pie de página -->
+    <footer>
+        Versión beta (2024)
+    </footer>
+</body>
+</html>

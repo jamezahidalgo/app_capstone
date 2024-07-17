@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>APP CAPSTONE - Generacion Planillas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 20px;
+        }
+        #progress-bar {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #ddd;
+            border-radius: 5px;
+        }
+        #progress-bar-fill {
+            height: 30px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            border-radius: 5px;
+            transition: width 0.3s ease-in-out;
+        }
+        #progress-details {
+            text-align: center;
+            color: #555;
+            margin-top: 10px;
+        }
+        #completion-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generación de planillas</h1>
+    <div id="progress-bar">
+        <div id="progress-bar-fill" style="width: 0%;">0%</div>
+    </div>
+    <div id="progress-details">Iniciando el proceso...</div>
+    <div id="completion-message">Proceso completado con éxito! Planillas generadas!</div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const eventSource = new EventSource("/process");
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const progressBarFill = document.getElementById("progress-bar-fill");
+                progressBarFill.style.width = data.progress + "%";
+                progressBarFill.textContent = data.progress + "%";
+                const progressDetails = document.getElementById("progress-details");
+                progressDetails.textContent = data.message;
+                if (data.progress === 100) {
+                    eventSource.close();
+                    document.getElementById("completion-message").style.display = "block";
+                }
+            };
+        });
+    </script>
+    <!-- Pie de página -->
+    <footer>
+        Versión beta (2024)
+    </footer>
+</body>
+</html>
