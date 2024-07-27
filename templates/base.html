@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}APP CAPSTONE{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{{ url_for('index') }}">Inicio</a>
+        <a href="{{ url_for('carga') }}">Carga de inscritos</a>
+        <!--<a href="{{ url_for('start') }}">Generación de planillas</a>-->
+        <a href="{{ url_for('cargaEquipos') }}">Actualización de equipos</a>
+        <a href="{{ url_for('reporteEvidencias')}}">Generación de reportes</a>
+    </div>
+    <div class="main-content">
+        <div class="content">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    <footer>
+        Versión beta (2024)
+    </footer>
+</body>
+</html>

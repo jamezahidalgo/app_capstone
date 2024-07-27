@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Generación de reportes{% endblock %}
+
+{% block content %}
+<h1>Generación de reportes</h1>
+<p>Acá se generan los reportes de evidencias</p>
+<ul>
+  <li>Reporte de evidencia individuales</li>
+  <li>Reporte de evidencia grupales</li>
+  <li>Listado de desertores</li>
+</ul>
+<p>Resultado en la planilla <b>reporte_evidencias.xlsx</b></p>
+<button id="start-button">Generar reporte</button>
+<div id="progress-bar">
+    <div id="progress-bar-fill" style="width: 0%;">0%</div>
+</div>
+<div id="progress-details">Esperando iniciar...</div>
+<div id="completion-message">Proceso completado con éxito! Reportes generados!</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+            const startButton = document.getElementById("start-button");
+            startButton.addEventListener("click", function() {
+                // Ocultar el botón y mostrar la barra de progreso y detalles
+                startButton.style.display = "none";
+                document.getElementById("progress-bar").style.display = "block";
+                document.getElementById("progress-details").style.display = "block";
+                
+                const eventSource = new EventSource("/report");
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    const progressBarFill = document.getElementById("progress-bar-fill");
+                    progressBarFill.style.width = data.progress + "%";
+                    progressBarFill.textContent = data.progress + "%";
+                    const progressDetails = document.getElementById("progress-details");
+                    progressDetails.textContent = data.message;
+                    if (data.progress === 100) {
+                        eventSource.close();
+                        document.getElementById("completion-message").style.display = "block";
+                    }
+                };
+            });
+        });
+</script>
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endwith %}
+
+{% endblock %}

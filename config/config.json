@@ -1,0 +1,6 @@
+{
+    "upload_folder": "uploads",
+    "generate_folder": "generate",
+    "archivo_equipos" : "data_equipos_simulado_con_deseertores.xlsx",
+    "archivo_inscritos" : "Inscritos.xlsx"
+}

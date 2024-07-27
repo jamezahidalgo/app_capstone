@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Carga inicial de inscritos{% endblock %}
+
+{% block content %}
+<h1>Carga de inscritos</h1>
+<p>Debe seleccionar la planilla con los inscritos.</p>
+<p>A partir de esta planilla se genera la planilla para formar los equipos.</p>
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endwith %}
+<form action="/upload" method="post" enctype="multipart/form-data" >
+  <input type="file" name="file" accept=".xlsx,.xls">
+  <input type="submit" name="submitButton" value="Cargar inscritos">
+</form>
+
+{% endblock %}

@@ -50,7 +50,7 @@ input[type="submit"]:disabled {
 ul {
     list-style-type: none;
     padding: 0;
-    color: red;
+    color: blue;
 }
 
 footer {
@@ -61,4 +61,169 @@ footer {
     color: #fff;
     text-align: center;
     padding: 10px 0;
+}
+
+/* Estilos para el menú desplegable */
+.navbar {
+    overflow: hidden;
+    background-color: #333;
+}
+
+.navbar .dropdown {
+    float: left;
+    overflow: hidden;
+}
+
+.navbar .dropbtn {
+    font-size: 16px;
+    border: none;
+    outline: none;
+    color: white;
+    padding: 14px 16px;
+    background-color: inherit;
+    font-family: inherit;
+    margin: 0;
+}
+
+.navbar a, .navbar .dropbtn {
+    display: inline-block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    background-color: blue;
+}
+
+.navbar a:hover, .navbar .dropdown:hover .dropbtn {
+    background-color: #575757;
+}
+
+.navbar .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.navbar .dropdown-content a {
+    float: none;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+
+.navbar .dropdown-content a:hover {
+    background-color: #ddd;
+}
+
+.navbar .dropdown:hover .dropdown-content {
+    display: block;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+h1 {
+    text-align: center;
+    color: #333;
+    margin-top: 20px;
+}
+/* Estilos para la barra de progreso */
+#progress-bar {
+    width: 100%;
+    background-color: #f3f3f3;
+}
+
+#progress-bar-fill {
+    height: 30px;
+    width: 0;
+    background-color: #4caf50;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+}
+
+#completion-message {
+    display: none;
+    margin-top: 20px;
+    color: rgb(4, 35, 192);
+    font-weight: bold;
+}
+
+#progress-details {
+    margin-top: 10px;
+    color: #333;
+}
+  /* Estilos para el botón de inicio */
+  #start-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+#start-button:hover {
+    background-color: #0056b3;
+}
+
+#start-button:active {
+    transform: scale(0.98);
+}
+
+#start-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.sidebar {
+    height: 100%;
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: blue ;
+    padding-top: 20px;
+}
+
+.sidebar a {
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 18px;
+    color: white;
+    display: block;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background-color: #575757;
+}
+
+/* Estilos para el contenido principal */
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+}
+
+.flashes {
+    list-style-type: none;
+    padding: 0;
+}
+
+.flashes li {
+    background-color: #f0ad4e;
+    color: white;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
 }
