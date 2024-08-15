@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Actualización de equipos{% endblock %}
+
+{% block content %}
+<h1>Actualización de equipos</h1>
+<p>Acá debe cargar la planilla con los equipos informados.</p>
+<p>A partir de esto se genera el resumen de las evidencias individuales y grupales</p>
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endwith %}
+<form action="/equipos" method="post" enctype="multipart/form-data" >
+    <input type="file" name="file" accept=".xlsx,.xls">
+    <input type="submit" value="Cargar equipos informados">
+</form>
+{% endblock %}
+

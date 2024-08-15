@@ -23,6 +23,16 @@
     <form action="{{ url_for('start') }}" method="get">
         <input type="submit" value="Iniciar Proceso">
     </form>
+    <form action="/simulacion" method="post">
+        <input type="submit" value="Simular equipos">
+    </form>    
+    <form action="/equipos" method="post" enctype="multipart/form-data" >
+        <input type="file" name="file" accept=".xlsx,.xls">
+        <input type="submit" value="Cargar equipos">
+    </form>
+    <form action="{{ url_for('reportes') }}" method="get">        
+        <input type="submit" value="Generar reportes">
+    </form>    
 </div>
     <!-- Pie de página -->
     <footer>
