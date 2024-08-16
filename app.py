@@ -86,6 +86,7 @@ def upload_file():
         #return redirect(request.url)
     if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
         filename = secure_filename(file.filename)
+        print(filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         session['archivo'] = file_path
         file.save(file_path)
