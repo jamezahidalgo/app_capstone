@@ -105,7 +105,8 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
 # Genera planilla para poder registrar los equipos
 def generate_files(folder : str, archivo_inscritos: str, generate_folder : str): 
     logs = []
-    file_path = os.path.join(folder, archivo_inscritos)
+    #file_path = os.path.join(folder, archivo_inscritos)
+    file_path = archivo_inscritos
     data_asignatura = pd.read_excel(file_path, header=1)
     #flash(f'Hay {data_asignatura.shape[0]} registros cargados')
     data_asignatura.columns = data_asignatura.columns.str.lower().str.replace(" ", "_", regex=True)
