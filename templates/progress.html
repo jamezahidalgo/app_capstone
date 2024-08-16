@@ -61,7 +61,9 @@
         <div id="progress-bar-fill" style="width: 0%;">0%</div>
     </div>
     <div id="progress-details">Iniciando el proceso...</div>
-    <div id="completion-message">Proceso completado con éxito! Planillas generadas!</div>
+    <div id="completion-message">Proceso completado con éxito! Planilla de equipos generada!
+        <a href="{{ url_for('index') }}">Volver</a>
+    </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const eventSource = new EventSource("/process");
