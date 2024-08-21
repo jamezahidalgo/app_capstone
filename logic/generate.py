@@ -50,17 +50,24 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
             for estudiante in equipos.query(s_query)[['rut_estudiante', 'estudiante']].values.tolist(): 
                 rut = estudiante[0]           
                 nombre_completo = estudiante[1]
+                if len(nombre_completo.split(" ")) == 2:
+                    nombre_para_archivo = nombre_completo.split(" ")[0] + "_" + nombre_completo.split(" ")[1]
+                else:
+                    nombre_para_archivo = nombre_completo.split(" ")[0] + "_" + nombre_completo.split(" ")[2]
                 for evidencia in evidencias_F1:
-                    nombre_evidencia = f"{rut}_1.1_APT122_{evidencia}.docx"
+                    #nombre_evidencia = f"{rut}_1.1_APT122_{evidencia}.docx"
+                    nombre_evidencia = f"{nombre_para_archivo}_1.1_APT122_{evidencia}.docx"
                     registro = [sede, seccion, docente[0], rut, nombre_completo, 1, nombre_evidencia, "NO"]
                     lst_evidencias.append(registro)
                 for evidencia in evidencias_F2:
-                    nombre_evidencia = f"{rut}_2.1_APT122_{evidencia}.docx"
+                    #nombre_evidencia = f"{rut}_2.1_APT122_{evidencia}.docx"
+                    nombre_evidencia = f"{nombre_para_archivo}_2.1_APT122_{evidencia}.docx"
                     registro = [sede, seccion, docente[0], rut, nombre_completo, 2, nombre_evidencia, "NO"]
                     lst_evidencias.append(registro)
 
                 for evidencia in evidencias_F3:
-                    nombre_evidencia = f"{rut}_3.1_APT122_{evidencia}.docx"
+                    #nombre_evidencia = f"{rut}_3.1_APT122_{evidencia}.docx"
+                    nombre_evidencia = f"{nombre_para_archivo}_3.1_APT122_{evidencia}.docx"
                     registro = [sede, seccion, docente[0], rut, nombre_completo, 3, nombre_evidencia, "NO"]
                     lst_evidencias.append(registro)
 
