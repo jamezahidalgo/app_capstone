@@ -35,7 +35,7 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
     
     # Resumen de evidencias individuales
     evidencias_F1 = ['AutoevaluacionCompetenciasFase1', 'DiarioReflexionFase1', 
-                  'AutoevaluacionReflexionFase1']
+                  'AutoevaluacionFase1']
     
     evidencias_F2 = ['DiarioReflexionFase2']
     evidencias_F3 = ['DiarioReflexionFase3']
@@ -54,22 +54,27 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
                     nombre_para_archivo = nombre_completo.split(" ")[0] + "_" + nombre_completo.split(" ")[1]
                 else:
                     nombre_para_archivo = nombre_completo.split(" ")[0] + "_" + nombre_completo.split(" ")[2]
+                n_indice = 1
                 for evidencia in evidencias_F1:
                     #nombre_evidencia = f"{rut}_1.1_APT122_{evidencia}.docx"
-                    nombre_evidencia = f"{nombre_para_archivo}_1.1_APT122_{evidencia}.docx"
+                    nombre_evidencia = f"{nombre_para_archivo}_1.{n_indice}_APT122_{evidencia}.docx"
                     registro = [sede, seccion, docente[0], rut, nombre_completo, 1, nombre_evidencia, "NO"]
                     lst_evidencias.append(registro)
+                    n_indice += 1
+                n_indice = 1
                 for evidencia in evidencias_F2:
                     #nombre_evidencia = f"{rut}_2.1_APT122_{evidencia}.docx"
-                    nombre_evidencia = f"{nombre_para_archivo}_2.1_APT122_{evidencia}.docx"
+                    nombre_evidencia = f"{nombre_para_archivo}_2.{n_indice}_APT122_{evidencia}.docx"
                     registro = [sede, seccion, docente[0], rut, nombre_completo, 2, nombre_evidencia, "NO"]
                     lst_evidencias.append(registro)
-
+                    n_indice += 1
+                n_indice = 1
                 for evidencia in evidencias_F3:
                     #nombre_evidencia = f"{rut}_3.1_APT122_{evidencia}.docx"
-                    nombre_evidencia = f"{nombre_para_archivo}_3.1_APT122_{evidencia}.docx"
+                    nombre_evidencia = f"{nombre_para_archivo}_3.{n_indice}_APT122_{evidencia}.docx"
                     registro = [sede, seccion, docente[0], rut, nombre_completo, 3, nombre_evidencia, "NO"]
                     lst_evidencias.append(registro)
+                    n_indice += 1
 
     resumen_evidencias = pd.DataFrame(lst_evidencias, columns=["sede","seccion","docente", "rut_estudiante", "estudiante", 
                                                                "fase","evidencia","estado"])
@@ -77,7 +82,7 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
     # Resumen de evidencias grupales
     evidencias_grupales_F1 = ['Presentacion.pptx',
                            '1.4_APT122_FormativaFase1.docx',
-                           '1.5_GuiaEstudiante_Fase1_Definicion Proyecto APT (Español).docx']
+                           '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Español).docx']
     
     evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase2_DesarrolloProyecto APT.docx',
                               '2.6_GuiaEstudiante_Fase2_Informe Final Proyecto APT.docx']
@@ -294,3 +299,4 @@ def generate_summary(upload_folder : str, generate_folder : str, listado_equipos
     yield f"data:{json.dumps(data)}\n\n"    
 
     return lst_logs
+
