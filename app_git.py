@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(description="APP capstone desde la línea de co
 parser.add_argument('--config', type=str, help='archivo de configuración')
 parser.add_argument('--source', type=str, help='archivo con datos de repositorios')
 parser.add_argument('--type', type=str, default="download", help='view | download | report')
+parser.add_argument('--verbose', type=bool, default=False, help='True | False')
 
 # Parsear los argumentos
 args = parser.parse_args()
@@ -37,14 +38,20 @@ if os.path.exists(ruta_archivo_config):
 # Lee archivo y comprueba las columnas
 teams, columns_problem = fn.validate_file_teams(archivo)
 if len(columns_problem) == 0:
-    print("Archivo de equipos válido")
+    print("log: Archivo de equipos válido")
     mensajes = generate.generate_equipos(datos['upload_folder'], archivo, 
                                          datos["generate_folder"])
     for mensaje in mensajes:
-        print(mensaje)    
+        print("log: ", mensaje)    
 
-    total, sin_informar = fn.revision_repositorio(teams)
-    print(f"Se han descargado exitosamente {total} repositorios")
-    print(f"Hay {sin_informar} equipos sin informar repositorio")
+    total, sin_informar, desertores = fn.revision_repositorio(teams)
+
+    print(f"log: Se han descargado exitosamente {total} repositorios")
+    print(f"log: Hay {sin_informar} equipos sin informar repositorio")
+    
+    # Genera reporte de desertores
+    total, salida = fn.reporte_desertores(desertores)
+    print(f"log: Reporte con {total} desertores generado existosamente en archivo {salida}")
+    
 else:
     print(f"Archivo de equipos inválido, {columns_problem} son las columnas con problemas")
