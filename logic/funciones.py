@@ -225,11 +225,11 @@ def revision_repositorio(source : pd.DataFrame, verbose = False):
                 print(f"Sede: {sede}, Sección {seccion}, Equipo: {equipo}, Repositorio: {repositorio}")
             path_destino = f"descargas/{sede}/{seccion}/equipo-{equipo}"
             if clonar_repositorio(repositorio, path_destino):
-                if revision_evidencias_individuales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1):
+                if revision_evidencias_individuales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1, verbose):
                     total_estructura_correcta+=1
                 total+=1
                 # Revisión de evidencias grupales
-                if revision_evidencias_grupales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1):
+                if revision_evidencias_grupales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1, verbose):
                     total_estructura_correcta+=1
         else:
             total_sin_informar+=1
@@ -242,8 +242,14 @@ def calcula_avances(data_evidencias : pd.DataFrame):
     resultado = data_evidencias.groupby(['sede', 'seccion', 'docente', 'equipo', 'fase', 'estado']).size().unstack(fill_value=0).reset_index()
 
     # Calcular el total de registros para cada grupo
+    # Verifica que exista la columna OK para el caso de que exista ninguna evidencia
+    if "OK" not in resultado.columns: 
+        resultado['OK'] = 0
+    
     resultado['Total'] = resultado['OK'] + resultado['NO']
-
+    
+    #print(resultado.query("seccion == 'PTY4614-006'"))
+    
     # Calcular el porcentaje de OK y NO
     resultado['% OK'] = round(resultado['OK'] / resultado['Total'], 2) #* 100
     resultado['% NO'] = round(resultado['NO'] / resultado['Total'],2) #* 100
@@ -272,6 +278,9 @@ def calcula_avances_por_estudiante(data_evidencias : pd.DataFrame):
     resultado = data_evidencias.groupby(['sede', 'seccion', 'docente', 'estudiante', 
                                          'fase', 'estado']).size().unstack(fill_value=0).reset_index()
 
+    if "OK" not in resultado.columns: 
+        resultado['OK'] = 0
+
     # Calcular el total de registros para cada grupo
     resultado['Total'] = resultado['OK'] + resultado['NO']
 
@@ -281,9 +290,20 @@ def calcula_avances_por_estudiante(data_evidencias : pd.DataFrame):
 
     # Mostrar el resultado
     #print(resultado[['sede', 'seccion', 'docente', 'estudiante', 'fase', '% OK', '% NO']])
+    # Obtener la fecha y hora actual
+    fecha_emision = datetime.now().strftime("%Y-%m-%d")
+    hora_emision = datetime.now().strftime("%H:%M:%S")
+    # Agregar una hoja con los metadatos
+    metadatos_data = {
+        "Campo": ["Fecha de emisión", "Hora de emisión"],
+        "Valor": [fecha_emision, hora_emision]
+    }
+    metadatos = pd.DataFrame(metadatos_data)     
     file_path = os.path.join("generate", "reporte_evidencias_individuales.xlsx")
     with pd.ExcelWriter(file_path) as reporte:
+        metadatos.to_excel(reporte, sheet_name="Metadata", index=False)
         resultado.to_excel(reporte, sheet_name="reporte", index=False)
+        
         #desertores[['sede', 'seccion', 'docente', 'estudiante']].to_excel(reporte, sheet_name="desertores", index=False)
 
 def reporte_desertores(data_desertores : pd.DataFrame, filename = "reporte_desertores.xlsx"):
