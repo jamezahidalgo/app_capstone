@@ -44,13 +44,16 @@ if len(columns_problem) == 0:
     for mensaje in mensajes:
         print("log: ", mensaje)    
 
-    total, sin_informar, desertores = fn.revision_repositorio(teams)
+    sede = archivo.split(".")[0].upper()
+    print(f"log: Generando reportes de sede {sede}")
+    total, sin_informar, desertores = fn.revision_repositorio(teams, sede, args.verbose)
 
     print(f"log: Se han descargado exitosamente {total} repositorios")
     print(f"log: Hay {sin_informar} equipos sin informar repositorio")
     
     # Genera reporte de desertores
-    total, salida = fn.reporte_desertores(desertores)
+    filename_report = f"reporte_desertores_{sede}.xlsx"
+    total, salida = fn.reporte_desertores(desertores, filename_report)
     print(f"log: Reporte con {total} desertores generado existosamente en archivo {salida}")
     
 else:
