@@ -86,7 +86,7 @@ def clonar_repositorio(git_url : str, destino : str):
         return False
 
 def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, sede : str,
-                                     seccion : str, equipo : str, fase : int):
+                                     seccion : str, equipo : str, fase : int, verbose=False):
     file_path = os.path.join("generate", source_file)  
     evidencias = pd.read_excel(file_path, sheet_name="individuales")
     evidencias_grupales = pd.read_excel(file_path, sheet_name="grupales")
@@ -109,12 +109,14 @@ def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, s
         evidencias_filtradas = evidencias[filtro_evidencias]['evidencia'].tolist()
         prefijo = f"descargas/{sede}/{seccion}/equipo-{equipo}"
         for x_evidencia in evidencias_filtradas:
-            ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), x_evidencia)
+            ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), x_evidencia.lower())
             if not os.path.exists(ruta_completa_archivo):
-                print(f"Archivo faltante: {ruta_completa_archivo}")
+                if verbose:
+                    print(f"Archivo faltante: {ruta_completa_archivo}")
                 todo_correcto = False            
             else:
-                print(f"Archivo OK: {ruta_completa_archivo}")
+                if verbose:
+                    print(f"Archivo OK: {ruta_completa_archivo}")
                 # Marca la evidencia como entregada
                 evidencias.iloc[evidencias.index[evidencias['evidencia'] == x_evidencia].tolist()[0],7] = "OK"
     
@@ -123,7 +125,8 @@ def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, s
         evidencias_grupales.to_excel(writer, sheet_name="grupales", index=False)
 
 def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede : str,
-                                     seccion : str, equipo : str, fase : int):
+                                     seccion : str, equipo : str, fase : int, verbose = False):
+    
     file_path = os.path.join("generate", source_file)  
     evidencias = pd.read_excel(file_path, sheet_name="individuales")
     evidencias_grupales = pd.read_excel(file_path, sheet_name="grupales")
@@ -145,14 +148,37 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     evidencias_equipo = evidencias_grupales[filtro_evidencias]['evidencia'].tolist()
     prefijo = f"descargas/{sede}/{seccion}/equipo-{equipo}"
     for x_evidencia in evidencias_equipo:
-        ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia)
-        if not os.path.exists(ruta_completa_archivo):
-            print(f"Archivo faltante: {ruta_completa_archivo}")
-            todo_correcto = False            
-        else:
-            print(f"Archivo OK: {ruta_completa_archivo}")
-            # Marca la evidencia como entregada
-            evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia) &
+        # Verifica si se trata del archivo de la presentación
+        if x_evidencia.startswith("Presentación"):
+            archivo_sin_extension = x_evidencia
+            for extension in ['.pdf', '.pptx']:
+                x_evidencia = archivo_sin_extension + extension   
+                ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
+                if not os.path.exists(ruta_completa_archivo):
+                    if verbose: 
+                        print(f"Archivo faltante: {ruta_completa_archivo}")
+                    todo_correcto = False            
+                else:
+                    if verbose: 
+                        print(f"Archivo OK: {ruta_completa_archivo}")
+                    # Marca la evidencia como entregada
+                    evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == archivo_sin_extension) &
+                                                                     (evidencias_grupales['equipo'] == equipo) &
+                                                               (evidencias_grupales['sede'] == sede) &
+                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"                 
+                    
+                    break
+        else:    
+            ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
+            if not os.path.exists(ruta_completa_archivo):
+                if verbose:
+                    print(f"Archivo faltante: {ruta_completa_archivo}")
+                todo_correcto = False            
+            else:
+                if verbose:
+                    print(f"Archivo OK: {ruta_completa_archivo}")
+                # Marca la evidencia como entregada
+                evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia) &
                                                                      (evidencias_grupales['equipo'] == equipo) &
                                                                (evidencias_grupales['sede'] == sede) &
                                                                (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"            
@@ -160,8 +186,16 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     with pd.ExcelWriter(file_path) as writer:
         evidencias.to_excel(writer, sheet_name="individuales", index=False)        
         evidencias_grupales.to_excel(writer, sheet_name="grupales", index=False)
+    
+    # Calcula los avances
+    # Evidencias grupales
+    calcula_avances(evidencias_grupales)
+    # Evidencias individuales
+    calcula_avances_por_estudiante(evidencias)
+    
+    return True
 
-def revision_repositorio(source : pd.DataFrame):
+def revision_repositorio(source : pd.DataFrame, verbose = False):
     """
     Revisa el estado de los repositorios contenidos en el dataframe indicado
 
@@ -187,9 +221,10 @@ def revision_repositorio(source : pd.DataFrame):
         # Comprobar si la columna de repositorio es NaN
         
         if not pd.isna(repositorio):
-            print(f"Sede: {sede}, Sección {seccion}, Equipo: {equipo}, Repositorio: {repositorio}")
+            if verbose:
+                print(f"Sede: {sede}, Sección {seccion}, Equipo: {equipo}, Repositorio: {repositorio}")
             path_destino = f"descargas/{sede}/{seccion}/equipo-{equipo}"
-            if clonar_repositorio(repositorio, path_destino):
+            if True: #clonar_repositorio(repositorio, path_destino):
                 if revision_evidencias_individuales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1):
                     total_estructura_correcta+=1
                 total+=1
@@ -199,4 +234,61 @@ def revision_repositorio(source : pd.DataFrame):
         else:
             total_sin_informar+=1
     
-    return total, total_sin_informar    
+
+    return total, total_sin_informar, source.query("equipo == 0")[['sede', 'seccion','docente', 'rut_estudiante', 'estudiante']]    
+
+def calcula_avances(data_evidencias : pd.DataFrame):
+    # Agrupar por las columnas deseadas y contar la cantidad de "OK" y "NO"
+    resultado = data_evidencias.groupby(['sede', 'seccion', 'docente', 'equipo', 'fase', 'estado']).size().unstack(fill_value=0).reset_index()
+
+    # Calcular el total de registros para cada grupo
+    resultado['Total'] = resultado['OK'] + resultado['NO']
+
+    # Calcular el porcentaje de OK y NO
+    resultado['% OK'] = round(resultado['OK'] / resultado['Total'], 2) #* 100
+    resultado['% NO'] = round(resultado['NO'] / resultado['Total'],2) #* 100
+
+    # Agrega metadata del reporte
+    # Obtener la fecha y hora actual
+    fecha_emision = datetime.now().strftime("%Y-%m-%d")
+    hora_emision = datetime.now().strftime("%H:%M:%S")
+    # Agregar una hoja con los metadatos
+    metadatos_data = {
+        "Campo": ["Fecha de emisión", "Hora de emisión"],
+        "Valor": [fecha_emision, hora_emision]
+    }
+    metadatos = pd.DataFrame(metadatos_data)  
+    # Mostrar el resultado
+    #print(resultado[['sede', 'seccion', 'docente', 'equipo', 'fase', '% OK', '% NO']])
+    file_path = os.path.join("generate", "reporte_evidencias_equipos.xlsx")
+    with pd.ExcelWriter(file_path) as reporte:
+        metadatos.to_excel(reporte, sheet_name="Metadata", index=False)
+        resultado.to_excel(reporte, sheet_name="reporte", index=False)
+
+def calcula_avances_por_estudiante(data_evidencias : pd.DataFrame):
+    # Obtiene los desertores
+    desertores = []
+    # Agrupar por las columnas deseadas y contar la cantidad de "OK" y "NO"
+    resultado = data_evidencias.groupby(['sede', 'seccion', 'docente', 'estudiante', 
+                                         'fase', 'estado']).size().unstack(fill_value=0).reset_index()
+
+    # Calcular el total de registros para cada grupo
+    resultado['Total'] = resultado['OK'] + resultado['NO']
+
+    # Calcular el porcentaje de OK y NO
+    resultado['% OK'] = round((resultado['OK'] / resultado['Total']),2) #* 100
+    resultado['% NO'] = round((resultado['NO'] / resultado['Total']),2) #* 100
+
+    # Mostrar el resultado
+    #print(resultado[['sede', 'seccion', 'docente', 'estudiante', 'fase', '% OK', '% NO']])
+    file_path = os.path.join("generate", "reporte_evidencias_individuales.xlsx")
+    with pd.ExcelWriter(file_path) as reporte:
+        resultado.to_excel(reporte, sheet_name="reporte", index=False)
+        #desertores[['sede', 'seccion', 'docente', 'estudiante']].to_excel(reporte, sheet_name="desertores", index=False)
+
+def reporte_desertores(data_desertores : pd.DataFrame, filename = "reporte_desertores.xlsx"):
+    file_path = os.path.join("generate", filename)
+    with pd.ExcelWriter(file_path) as reporte:
+        data_desertores.to_excel(reporte, sheet_name="desertores", index=False)
+    return data_desertores.shape[0], file_path
+    
