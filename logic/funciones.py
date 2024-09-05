@@ -189,13 +189,13 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     
     # Calcula los avances
     # Evidencias grupales
-    calcula_avances(evidencias_grupales)
+    calcula_avances(evidencias_grupales, sede)
     # Evidencias individuales
-    calcula_avances_por_estudiante(evidencias)
+    calcula_avances_por_estudiante(evidencias, sede)
     
     return True
 
-def revision_repositorio(source : pd.DataFrame, verbose = False):
+def revision_repositorio(source : pd.DataFrame, sede : str, verbose = False):
     """
     Revisa el estado de los repositorios contenidos en el dataframe indicado
 
@@ -237,7 +237,7 @@ def revision_repositorio(source : pd.DataFrame, verbose = False):
 
     return total, total_sin_informar, source.query("equipo == 0")[['sede', 'seccion','docente', 'rut_estudiante', 'estudiante']]    
 
-def calcula_avances(data_evidencias : pd.DataFrame):
+def calcula_avances(data_evidencias : pd.DataFrame, sede : str):
     # Agrupar por las columnas deseadas y contar la cantidad de "OK" y "NO"
     resultado = data_evidencias.groupby(['sede', 'seccion', 'docente', 'equipo', 'fase', 'estado']).size().unstack(fill_value=0).reset_index()
 
@@ -247,9 +247,7 @@ def calcula_avances(data_evidencias : pd.DataFrame):
         resultado['OK'] = 0
     
     resultado['Total'] = resultado['OK'] + resultado['NO']
-    
-    #print(resultado.query("seccion == 'PTY4614-006'"))
-    
+        
     # Calcular el porcentaje de OK y NO
     resultado['% OK'] = round(resultado['OK'] / resultado['Total'], 2) #* 100
     resultado['% NO'] = round(resultado['NO'] / resultado['Total'],2) #* 100
@@ -266,12 +264,12 @@ def calcula_avances(data_evidencias : pd.DataFrame):
     metadatos = pd.DataFrame(metadatos_data)  
     # Mostrar el resultado
     #print(resultado[['sede', 'seccion', 'docente', 'equipo', 'fase', '% OK', '% NO']])
-    file_path = os.path.join("generate", "reporte_evidencias_equipos.xlsx")
+    file_path = os.path.join("generate", f"reporte_evidencias_equipos_{sede}.xlsx")
     with pd.ExcelWriter(file_path) as reporte:
         metadatos.to_excel(reporte, sheet_name="Metadata", index=False)
         resultado.to_excel(reporte, sheet_name="reporte", index=False)
 
-def calcula_avances_por_estudiante(data_evidencias : pd.DataFrame):
+def calcula_avances_por_estudiante(data_evidencias : pd.DataFrame, sede : str):
     # Obtiene los desertores
     desertores = []
     # Agrupar por las columnas deseadas y contar la cantidad de "OK" y "NO"
@@ -299,14 +297,14 @@ def calcula_avances_por_estudiante(data_evidencias : pd.DataFrame):
         "Valor": [fecha_emision, hora_emision]
     }
     metadatos = pd.DataFrame(metadatos_data)     
-    file_path = os.path.join("generate", "reporte_evidencias_individuales.xlsx")
+    file_path = os.path.join("generate", f"reporte_evidencias_individuales_{sede}.xlsx")
     with pd.ExcelWriter(file_path) as reporte:
         metadatos.to_excel(reporte, sheet_name="Metadata", index=False)
         resultado.to_excel(reporte, sheet_name="reporte", index=False)
         
         #desertores[['sede', 'seccion', 'docente', 'estudiante']].to_excel(reporte, sheet_name="desertores", index=False)
 
-def reporte_desertores(data_desertores : pd.DataFrame, filename = "reporte_desertores.xlsx"):
+def reporte_desertores(data_desertores : pd.DataFrame, filename :str):
     file_path = os.path.join("generate", filename)
     with pd.ExcelWriter(file_path) as reporte:
         data_desertores.to_excel(reporte, sheet_name="desertores", index=False)
