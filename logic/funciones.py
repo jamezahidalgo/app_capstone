@@ -224,7 +224,7 @@ def revision_repositorio(source : pd.DataFrame, verbose = False):
             if verbose:
                 print(f"Sede: {sede}, Sección {seccion}, Equipo: {equipo}, Repositorio: {repositorio}")
             path_destino = f"descargas/{sede}/{seccion}/equipo-{equipo}"
-            if True: #clonar_repositorio(repositorio, path_destino):
+            if clonar_repositorio(repositorio, path_destino):
                 if revision_evidencias_individuales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1):
                     total_estructura_correcta+=1
                 total+=1
