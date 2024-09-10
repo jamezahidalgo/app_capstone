@@ -201,6 +201,8 @@ def revision_repositorio(source : pd.DataFrame, sede : str, verbose = False):
 
     :param source: dataframe que contiene datos de los equipos incluyendo los nombres de los repositorios
     """
+    # Log de resultados
+    log_repositorios = []
     # Agrupar por 'sede', 'docente', 'sección' y 'equipo'
     result = source.groupby(['sede', 'docente', 'seccion', 'equipo'], as_index=False).agg(
         cantidad_estudiantes=('estudiante', 'count'),
@@ -225,17 +227,20 @@ def revision_repositorio(source : pd.DataFrame, sede : str, verbose = False):
                 print(f"Sede: {sede}, Sección {seccion}, Equipo: {equipo}, Repositorio: {repositorio}")
             path_destino = f"descargas/{sede}/{seccion}/equipo-{equipo}"
             if clonar_repositorio(repositorio, path_destino):
+                log_repositorios.append([repositorio, path_destino])
                 if revision_evidencias_individuales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1, verbose):
                     total_estructura_correcta+=1
                 total+=1
                 # Revisión de evidencias grupales
                 if revision_evidencias_grupales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1, verbose):
                     total_estructura_correcta+=1
+            else:
+                log_repositorios.append([repositorio, f'Error al clonar: {seccion}/equipo-{equipo}'])
         else:
             total_sin_informar+=1
     
 
-    return total, total_sin_informar, source.query("equipo == 0")[['sede', 'seccion','docente', 'rut_estudiante', 'estudiante']]    
+    return total, total_sin_informar, source.query("equipo == 0")[['sede', 'seccion','docente', 'rut_estudiante', 'estudiante']], log_repositorios    
 
 def calcula_avances(data_evidencias : pd.DataFrame, sede : str):
     # Agrupar por las columnas deseadas y contar la cantidad de "OK" y "NO"
@@ -310,3 +315,10 @@ def reporte_desertores(data_desertores : pd.DataFrame, filename :str):
         data_desertores.to_excel(reporte, sheet_name="desertores", index=False)
     return data_desertores.shape[0], file_path
     
+def reporte_git(data_git : np.array, filename :str):
+    data_repositorios = pd.DataFrame(data_git)
+    data_repositorios.columns = ['enlace', 'estado']
+    file_path = os.path.join("generate", filename)
+    with pd.ExcelWriter(file_path) as reporte:
+        data_repositorios.to_excel(reporte, sheet_name="estado_descarga", index=False)
+    return data_repositorios.shape[0], file_path
