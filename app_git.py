@@ -46,7 +46,7 @@ if len(columns_problem) == 0:
 
     sede = archivo.split(".")[0].upper()
     print(f"log: Generando reportes de sede {sede}")
-    total, sin_informar, desertores = fn.revision_repositorio(teams, sede, args.verbose)
+    total, sin_informar, desertores, log_git = fn.revision_repositorio(teams, sede, args.verbose)
 
     print(f"log: Se han descargado exitosamente {total} repositorios")
     print(f"log: Hay {sin_informar} equipos sin informar repositorio")
@@ -55,6 +55,11 @@ if len(columns_problem) == 0:
     filename_report = f"reporte_desertores_{sede}.xlsx"
     total, salida = fn.reporte_desertores(desertores, filename_report)
     print(f"log: Reporte con {total} desertores generado existosamente en archivo {salida}")
+
+    # Reporte con la descarga de los repositorios
+    report_git = f"reporte_git_{sede}.xlsx"
+    total, salida = fn.reporte_git(log_git, report_git)
+    print(f"log: Reporte con {total} repositorios generado existosamente en archivo {salida}")
     
 else:
     print(f"Archivo de equipos inválido, {columns_problem} son las columnas con problemas")
