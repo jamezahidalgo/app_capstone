@@ -13,13 +13,13 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
     lst_messages = []
     # Genera de planilla de los equipos
     file_path = os.path.join(folder, archivo_equipos)
-    print(file_path, archivo_equipos)
+    lst_messages.append(f"Se han cargado los datos desde {file_path}")
     equipos = pd.read_excel(file_path)
     n_desertores = equipos.query("equipo == 0").shape[0]
     n_sedes = pd.DataFrame(equipos.groupby("sede")).shape[0]
     lst_messages.append(f"Hay {n_desertores} desertores registrados")
     lst_messages.append(f"Hay {n_sedes} sedes cargadas")
-    print(equipos.shape)
+    lst_messages.append(f"Hay {equipos.shape[0]} estudiantes cargados en total")
     equipos = equipos.query("equipo > 0")
     resumen_equipos = pd.DataFrame(equipos.groupby(["sede","seccion","equipo"]).size()).reset_index()
     resumen_equipos.columns.values[-1] = 'total_integrantes'
@@ -80,14 +80,14 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
                                                                "fase","evidencia","estado"])
     
     # Resumen de evidencias grupales
-    evidencias_grupales_F1 = ['Presentacion.pptx',
+    evidencias_grupales_F1 = ['Presentación idea de proyecto',
                            '1.4_APT122_FormativaFase1.docx',
                            '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Español).docx']
     
     evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase2_DesarrolloProyecto APT.docx',
                               '2.6_GuiaEstudiante_Fase2_Informe Final Proyecto APT.docx']
     
-    evidencias_grupales_F3 = ['Presentacion,pptx']
+    evidencias_grupales_F3 = ['Presentación idea de proyecto']
 
     lst_evidencias_grupales = []
     
