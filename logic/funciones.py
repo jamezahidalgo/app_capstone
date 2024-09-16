@@ -111,13 +111,25 @@ def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, s
         for x_evidencia in evidencias_filtradas:
             ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), x_evidencia.lower())
             if not os.path.exists(ruta_completa_archivo):
+                if "auto" in x_evidencia.lower():
+                    ruta_reemplazada = x_evidencia.replace("cion", "ción")                    
+                    ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), 
+                                                       ruta_reemplazada.lower())
+                    todo_correcto =  os.path.exists(ruta_completa_archivo_r)                        
+                elif "diario" in x_evidencia.lower():
+                    ruta_reemplazada = x_evidencia.replace("xion", "xión")
+                    
+                    ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), 
+                                                       ruta_reemplazada.lower())
+                    todo_correcto = os.path.exists(ruta_completa_archivo_r)                       
                 if verbose:
                     print(f"Archivo faltante: {ruta_completa_archivo}")
-                todo_correcto = False            
             else:
                 if verbose:
                     print(f"Archivo OK: {ruta_completa_archivo}")
-                # Marca la evidencia como entregada
+                todo_correcto = True
+            # Marca la evidencia como entregada
+            if todo_correcto:
                 evidencias.iloc[evidencias.index[evidencias['evidencia'] == x_evidencia].tolist()[0],7] = "OK"
     
     with pd.ExcelWriter(file_path) as writer:
