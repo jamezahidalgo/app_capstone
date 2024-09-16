@@ -149,7 +149,7 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     prefijo = f"descargas/{sede}/{seccion}/equipo-{equipo}"
     for x_evidencia in evidencias_equipo:
         # Verifica si se trata del archivo de la presentación
-        if x_evidencia.startswith("Presentación"):
+        if x_evidencia.startswith("Presentación") or x_evidencia.startswith("Presentacion"):
             archivo_sin_extension = x_evidencia
             for extension in ['.pdf', '.pptx']:
                 x_evidencia = archivo_sin_extension + extension   
