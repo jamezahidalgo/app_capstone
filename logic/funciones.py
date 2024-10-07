@@ -160,6 +160,30 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     evidencias_equipo = evidencias_grupales[filtro_evidencias]['evidencia'].tolist()
     prefijo = f"descargas/{sede}/{seccion}/equipo-{equipo}"
     for x_evidencia in evidencias_equipo:
+        # Verifica si se trata de la planilla de notas
+        if x_evidencia.startswith("Planilla"):            
+            ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
+            if not os.path.exists(ruta_completa_archivo):
+                ruta_reemplazada = x_evidencia.replace("cion", "ción") 
+                ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), 
+                                                       ruta_reemplazada.lower())
+                todo_correcto =  os.path.exists(ruta_completa_archivo_r)  
+                if todo_correcto:
+                    # Marca la evidencia como entregada
+                    evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == ruta_reemplazada) &
+                                                                     (evidencias_grupales['equipo'] == equipo) &
+                                                               (evidencias_grupales['sede'] == sede) &
+                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"            
+
+            else: 
+                todo_correcto = True        
+                if verbose: 
+                    print(f"Archivo OK: {ruta_completa_archivo}")
+                # Marca la evidencia como entregada
+                evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia) &
+                                                                     (evidencias_grupales['equipo'] == equipo) &
+                                                               (evidencias_grupales['sede'] == sede) &
+                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"            
         # Verifica si se trata del archivo de la presentación
         if x_evidencia.startswith("Presentación") or x_evidencia.startswith("Presentacion"):
             archivo_sin_extension = x_evidencia
@@ -240,11 +264,11 @@ def revision_repositorio(source : pd.DataFrame, sede : str, verbose = False):
             path_destino = f"descargas/{sede}/{seccion}/equipo-{equipo}"
             if clonar_repositorio(repositorio, path_destino):
                 log_repositorios.append([repositorio, path_destino])
-                if revision_evidencias_individuales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1, verbose):
+                if revision_evidencias_individuales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo,1, verbose):
                     total_estructura_correcta+=1
                 total+=1
                 # Revisión de evidencias grupales
-                if revision_evidencias_grupales("resumen_evidencias.xlsx", source, sede, seccion, equipo,1, verbose):
+                if revision_evidencias_grupales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo,1, verbose):
                     total_estructura_correcta+=1
             else:
                 log_repositorios.append([repositorio, f'Error al clonar: {seccion}/equipo-{equipo}'])

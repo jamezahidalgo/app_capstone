@@ -9,7 +9,7 @@ from datetime import datetime
 
 from logic.funciones import descomprimir, calculate_percentage
 
-def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str):
+def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str, sede : str):
     lst_messages = []
     # Genera de planilla de los equipos
     file_path = os.path.join(folder, archivo_equipos)
@@ -82,12 +82,17 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
     # Resumen de evidencias grupales
     evidencias_grupales_F1 = ['Presentación idea de proyecto',
                            '1.4_APT122_FormativaFase1.docx',
-                           '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Español).docx']
+                           '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Español).docx',
+                           'PLANILLA DE EVALUACIÓN FASE 1.xlsx']
     
     evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase2_DesarrolloProyecto APT.docx',
-                              '2.6_GuiaEstudiante_Fase2_Informe Final Proyecto APT.docx']
+                              '2.6_GuiaEstudiante_Fase2_Informe Final Proyecto APT.docx',
+                              'PLANILLA DE EVALUACIÓN AVANCE FASE 2.xlsx',
+                              'PLANILLA DE EVALUACIÓN FINAL FASE 2.xlsx'
+                              ]
     
-    evidencias_grupales_F3 = ['Presentación idea de proyecto']
+    evidencias_grupales_F3 = ['Presentación Final del proyecto (Español)',
+                              'PLANILLA DE EVALUACIÓN FASE 3.xlsx']
 
     lst_evidencias_grupales = []
     
@@ -105,7 +110,7 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str)
     resumen_evidencias_grupales = pd.DataFrame(lst_evidencias_grupales, columns=["sede","seccion","docente", "equipo", "fase",
                                                                                   "evidencia","estado"])
     # Cargar el libro de trabajo existente
-    file_path = os.path.join(generate_folder, "resumen_evidencias.xlsx")
+    file_path = os.path.join(generate_folder, f"resumen_evidencias_{sede}.xlsx")
 
     with pd.ExcelWriter(file_path) as writer:
         resumen_evidencias.to_excel(writer, sheet_name="individuales", index=False)
