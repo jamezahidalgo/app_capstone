@@ -39,12 +39,13 @@ if os.path.exists(ruta_archivo_config):
 teams, columns_problem = fn.validate_file_teams(archivo)
 if len(columns_problem) == 0:
     print("log: Archivo de equipos válido")
+    sede = archivo.split(".")[0].upper()
     mensajes = generate.generate_equipos(datos['upload_folder'], archivo, 
-                                         datos["generate_folder"])
+                                         datos["generate_folder"], sede)
     for mensaje in mensajes:
         print("log: ", mensaje)    
 
-    sede = archivo.split(".")[0].upper()
+    
     print(f"log: Generando reportes de sede {sede}")
     total, sin_informar, desertores, log_git = fn.revision_repositorio(teams, sede, args.verbose)
 
