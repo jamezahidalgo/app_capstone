@@ -264,12 +264,14 @@ def revision_repositorio(source : pd.DataFrame, sede : str, verbose = False):
             path_destino = f"descargas/{sede}/{seccion}/equipo-{equipo}"
             if clonar_repositorio(repositorio, path_destino):
                 log_repositorios.append([repositorio, path_destino])
-                if revision_evidencias_individuales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo,1, verbose):
-                    total_estructura_correcta+=1
-                total+=1
-                # Revisión de evidencias grupales
-                if revision_evidencias_grupales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo,1, verbose):
-                    total_estructura_correcta+=1
+                # Revisión de evidencias por fase
+                for fase in range(1,4):
+                    if revision_evidencias_individuales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo, fase, verbose):
+                        total_estructura_correcta+=1
+                    total+=1
+                    # Revisión de evidencias grupales
+                    if revision_evidencias_grupales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo, fase, verbose):
+                        total_estructura_correcta+=1
             else:
                 log_repositorios.append([repositorio, f'Error al clonar: {seccion}/equipo-{equipo}'])
         else:

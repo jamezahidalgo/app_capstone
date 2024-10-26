@@ -85,8 +85,8 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str,
                            '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Español).docx',
                            'PLANILLA DE EVALUACIÓN FASE 1.xlsx']
     
-    evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase2_DesarrolloProyecto APT.docx',
-                              '2.6_GuiaEstudiante_Fase2_Informe Final Proyecto APT.docx',
+    evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase 2_DesarrolloProyecto APT (Español).docx',
+                              '2.6_GuiaEstudiante_Fase 2_Informe Final Proyecto APT (Español).docx',
                               'PLANILLA DE EVALUACIÓN AVANCE FASE 2.xlsx',
                               'PLANILLA DE EVALUACIÓN FINAL FASE 2.xlsx'
                               ]
