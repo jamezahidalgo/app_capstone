@@ -199,6 +199,7 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     evidencias = pd.read_excel(file_path, sheet_name="individuales")
     evidencias_grupales = pd.read_excel(file_path, sheet_name="grupales")
 
+    extensiones_validas_planillas = ['.xls', '.xlsx']
     # Filtro de los equipos
     filtro = (
         (source['sede'] == sede) &
@@ -220,10 +221,18 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
         if x_evidencia.startswith("Planilla"):            
             ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
             if not os.path.exists(ruta_completa_archivo):
-                ruta_reemplazada = x_evidencia.replace("cion", "ción") 
-                ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), 
-                                                       ruta_reemplazada.lower())
-                todo_correcto =  os.path.exists(ruta_completa_archivo_r)  
+                #ruta_reemplazada = x_evidencia.replace("cion", "ción") 
+                #ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), 
+                                                       #ruta_reemplazada.lower())
+                evidencia_sin_extension = x_evidencia.split(".")[0]
+                if x_evidencia.lower().endswith("xlsx"):
+                    todo_correcto = False
+                    for ext in extensiones_validas_planillas:
+                        other_name = f"{evidencia_sin_extension}.{ext}"
+                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), other_name.lower())
+                        if os.path.exists(ruta_completa_archivo_n):
+                            todo_correcto = True                            
+                            break                                                          
                 if todo_correcto:
                     # Marca la evidencia como entregada
                     evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == ruta_reemplazada) &

@@ -80,19 +80,19 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str,
                                                                "fase","evidencia","estado"])
     
     # Resumen de evidencias grupales
-    evidencias_grupales_F1 = ['Presentación idea de proyecto',
+    evidencias_grupales_F1 = ['Presentacion idea de proyecto',
                            '1.4_APT122_FormativaFase1.docx',
                            '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Espanol).docx',
-                           'PLANILLA DE EVALUACIÓN FASE 1.xlsx']
+                           'PLANILLA DE EVALUACION FASE 1.xlsx']
     
     evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase 2_DesarrolloProyecto APT (Espanol).docx',
                               '2.6_GuiaEstudiante_Fase 2_Informe Final Proyecto APT (Espanol).docx',
-                              'PLANILLA DE EVALUACIÓN AVANCE FASE 2.xlsx',
-                              'PLANILLA DE EVALUACIÓN FINAL FASE 2.xlsx'
+                              'PLANILLA DE EVALUACION AVANCE FASE 2.xlsx',
+                              'PLANILLA DE EVALUACION FINAL FASE 2.xlsx'
                               ]
     
-    evidencias_grupales_F3 = ['Presentación Final del proyecto (Espanol)',
-                              'PLANILLA DE EVALUACIÓN FASE 3.xlsx']
+    evidencias_grupales_F3 = ['Presentacion Final del proyecto (Espanol)',
+                              'PLANILLA DE EVALUACION FASE 3.xlsx']
 
     lst_evidencias_grupales = []
     
