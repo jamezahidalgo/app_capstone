@@ -8,6 +8,7 @@ import json
 import shutil
 
 import subprocess
+import unicodedata
 
 from datetime import datetime
 
@@ -58,6 +59,29 @@ def validate_file_teams(source : str):
             columns_with_problems.append(column)
     return data_teams, columns_with_problems
 
+def normalizar(texto : str) -> str:
+    """Elimina tildes y reemplaza 'ñ' o 'Ñ' por 'n'."""
+    # Normaliza el texto para separar los diacríticos
+    texto_normalizado = unicodedata.normalize('NFD', texto)
+    # Elimina los diacríticos (caracteres con categoría 'Mn')
+    texto_sin_tildes = ''.join(c for c in texto_normalizado if unicodedata.category(c) != 'Mn')
+    # Reemplaza 'ñ' y 'Ñ' por 'n'
+    texto_sin_tildes = texto_sin_tildes.replace('ñ', 'n').replace('Ñ', 'N')
+    return texto_sin_tildes
+
+def renombrar_archivos_directorio(directorio):
+    # Obtiene los archivos de la carpeta
+    for root, _, files in os.walk(directorio):
+        # Revisión de archivos
+        for filename in files:
+            nuevo_nombre = normalizar(filename)
+            if nuevo_nombre != filename:  # Renombra sólo si hay cambios
+                ruta_vieja = os.path.join(root, filename)
+                ruta_nueva = os.path.join(root, nuevo_nombre)
+                # Renombra el archivo
+                os.rename(ruta_vieja, ruta_nueva)
+                #print(f'Renombrado: {ruta_vieja} -> {ruta_nueva}')
+
 def clonar_repositorio(git_url : str, destino : str):
     """
     Clona un repositorio Git dado el URL del repositorio y la ruta de destino.
@@ -79,7 +103,11 @@ def clonar_repositorio(git_url : str, destino : str):
     try:
         # Ejecutar el comando git clone
         subprocess.run(["git", "clone", git_url, destino], check=True)
+        # Elimina tildes y reemplaza las ñ por n de los nombres de archivos en el repositorio clonado
+        renombrar_archivos_directorio(destino)
+        
         print(f"Repositorio clonado en {destino}")
+        
         return True
     except subprocess.CalledProcessError as e:
         print(f"Error al clonar el repositorio: {e}")
@@ -97,6 +125,9 @@ def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, s
         (source['seccion'] == seccion) &
         (source['equipo'] == equipo)
     )
+    # Definir las extensiones válidas
+    extensiones_validas_doc = ['.doc', '.docx', '.pdf']
+    extensiones_validas_planillas = ['.xls', '.xlsx']
     # Obtener el listado de estudiantes que cumplen con los criterios
     estudiantes_filtrados = source[filtro]['estudiante'].tolist()   
     for estudiante in estudiantes_filtrados:
@@ -110,20 +141,30 @@ def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, s
         prefijo = f"descargas/{sede}/{seccion}/equipo-{equipo}"
         for x_evidencia in evidencias_filtradas:
             ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), x_evidencia.lower())
+            # Verifica si existe la evidencia definida en el estándar
             if not os.path.exists(ruta_completa_archivo):
-                if "auto" in x_evidencia.lower():
-                    ruta_reemplazada = x_evidencia.replace("cion", "ción")                    
-                    ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), 
-                                                       ruta_reemplazada.lower())
-                    todo_correcto =  os.path.exists(ruta_completa_archivo_r)                        
-                elif "diario" in x_evidencia.lower():
-                    ruta_reemplazada = x_evidencia.replace("xion", "xión")
-                    
-                    ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), 
-                                                       ruta_reemplazada.lower())
-                    todo_correcto = os.path.exists(ruta_completa_archivo_r)                       
-                if verbose:
+                evidencia_sin_extension = x_evidencia.split(".")[0]
+                # Verifica si se trata de un documento
+                if x_evidencia.lower().endswith("docx"):
+                    todo_correcto = False
+                    for ext in extensiones_validas_doc:
+                        other_name = f"{evidencia_sin_extension}.{ext}"
+                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), other_name.lower())
+                        if os.path.exists(ruta_completa_archivo_n):
+                            todo_correcto = True                            
+                            break  
+                elif x_evidencia.lower().endswith("xlsx"):
+                    todo_correcto = False
+                    for ext in extensiones_validas_planillas:
+                        other_name = f"{evidencia_sin_extension}.{ext}"
+                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), other_name.lower())
+                        if os.path.exists(ruta_completa_archivo_n):
+                            todo_correcto = True                            
+                            break                                       
+                if verbose and not todo_correcto:
                     print(f"Archivo faltante: {ruta_completa_archivo}")
+                if verbose and todo_correcto:
+                    print(f"Archivo OK: {ruta_completa_archivo}")                
             else:
                 if verbose:
                     print(f"Archivo OK: {ruta_completa_archivo}")

@@ -82,16 +82,16 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str,
     # Resumen de evidencias grupales
     evidencias_grupales_F1 = ['Presentación idea de proyecto',
                            '1.4_APT122_FormativaFase1.docx',
-                           '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Español).docx',
+                           '1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT (Espanol).docx',
                            'PLANILLA DE EVALUACIÓN FASE 1.xlsx']
     
-    evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase 2_DesarrolloProyecto APT (Español).docx',
-                              '2.6_GuiaEstudiante_Fase 2_Informe Final Proyecto APT (Español).docx',
+    evidencias_grupales_F2 = ['2.4_GuiaEstudiante_Fase 2_DesarrolloProyecto APT (Espanol).docx',
+                              '2.6_GuiaEstudiante_Fase 2_Informe Final Proyecto APT (Espanol).docx',
                               'PLANILLA DE EVALUACIÓN AVANCE FASE 2.xlsx',
                               'PLANILLA DE EVALUACIÓN FINAL FASE 2.xlsx'
                               ]
     
-    evidencias_grupales_F3 = ['Presentación Final del proyecto (Español)',
+    evidencias_grupales_F3 = ['Presentación Final del proyecto (Espanol)',
                               'PLANILLA DE EVALUACIÓN FASE 3.xlsx']
 
     lst_evidencias_grupales = []
@@ -218,7 +218,6 @@ def generate_summary(upload_folder : str, generate_folder : str, listado_equipos
     archivo_evidencias = "resumen_evidencias.xlsx" #app.config['RESUMEN_EVIDENCIAS']
     file_path = os.path.join(generate_folder, archivo_evidencias)   
     resumen_evidencias = pd.read_excel(file_path)
-    #resumen_evidencias = resumen_evidencias.drop(["Unnamed: 0"], axis = 1)
 
     # Se deben descartar los desertores
     # Realizar un merge de los DataFrames
@@ -228,20 +227,6 @@ def generate_summary(upload_folder : str, generate_folder : str, listado_equipos
 
     # Filtrar las filas que están sólo en el grupo sin desertores
     resumen_evidencias = sin_desertores[sin_desertores['_merge'] == 'left_only'].drop(columns=['_merge'])
-    #print(result_df.columns)
-    #random_seccion = resumen_evidencias.sample(n=1500, random_state=29)
-    #resumen_evidencias.loc[random_seccion.index, 'estado'] = "OK"
-    #print(equipos_final.columns)
-    #print(resumen_evidencias.columns)
-    #directory_path = app.config['GENERATE_FOLDER']
-    #path_generate = os.path.join(generate_folder, "resumen_evidencias.xlsx")
-    #resumen_evidencias.to_excel(path_generate)
-    #resumen_evidencias.to_excel("resumen_evidencias.xlsx")
-        
-    # Carga las evidencias
-    #path_generate = os.path.join(generate_folder, "resumen_evidencias.xlsx")
-    #resumen_evidencias_final = pd.read_excel(path_generate)
-    #resumen_evidencias_final = resumen_evidencias_final.drop(["Unnamed: 0"], axis = 1)
 
     progress, message = 75, 'Generando resumen evidencias...' 
     data = {'progress': progress, 'message': message}
