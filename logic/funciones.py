@@ -59,6 +59,18 @@ def validate_file_teams(source : str):
             columns_with_problems.append(column)
     return data_teams, columns_with_problems
 
+def generar_nombre_unico(ruta: str) -> str:
+    """Genera un nombre único si el archivo ya existe."""
+    directorio, nombre_archivo = os.path.split(ruta)
+    nombre, extension = os.path.splitext(nombre_archivo)
+    contador = 1
+
+    # Mientras exista un archivo con el mismo nombre, incrementa el contador.
+    while os.path.exists(ruta):
+        ruta = os.path.join(directorio, f"{nombre}_{contador}{extension}")
+        contador += 1
+    return ruta
+
 def normalizar(texto : str) -> str:
     """Elimina tildes y reemplaza 'ñ' o 'Ñ' por 'n'."""
     # Normaliza el texto para separar los diacríticos
@@ -78,6 +90,9 @@ def renombrar_archivos_directorio(directorio):
             if nuevo_nombre != filename:  # Renombra sólo si hay cambios
                 ruta_vieja = os.path.join(root, filename)
                 ruta_nueva = os.path.join(root, nuevo_nombre)
+                # Verifica si existe un archivo con el mismo nombre normalizado.
+                if os.path.exists(ruta_nueva):
+                    ruta_nueva = generar_nombre_unico(ruta_nueva)                
                 # Renombra el archivo
                 os.rename(ruta_vieja, ruta_nueva)
                 #print(f'Renombrado: {ruta_vieja} -> {ruta_nueva}')
@@ -105,7 +120,7 @@ def clonar_repositorio(git_url : str, destino : str):
         subprocess.run(["git", "clone", git_url, destino], check=True)
         # Elimina tildes y reemplaza las ñ por n de los nombres de archivos en el repositorio clonado
         renombrar_archivos_directorio(destino)
-        
+
         print(f"Repositorio clonado en {destino}")
         
         return True
