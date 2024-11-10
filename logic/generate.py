@@ -7,7 +7,7 @@ import json
 
 from datetime import datetime
 
-from logic.funciones import descomprimir, calculate_percentage
+from logic.funciones import descomprimir, calculate_percentage, normalizar
 
 def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str, sede : str):
     lst_messages = []
@@ -49,30 +49,32 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str,
             
             for estudiante in equipos.query(s_query)[['rut_estudiante', 'estudiante']].values.tolist(): 
                 rut = estudiante[0]           
-                nombre_completo = estudiante[1]
+                nombre_completo = normalizar(estudiante[1])
                 if len(nombre_completo.split(" ")) == 2:
                     nombre_para_archivo = nombre_completo.split(" ")[0] + "_" + nombre_completo.split(" ")[1]
                 else:
                     nombre_para_archivo = nombre_completo.split(" ")[0] + "_" + nombre_completo.split(" ")[2]
                 n_indice = 1
+                # Normaliza el nombre 
+                #nombre_para_archivo = normalizar(nombre_para_archivo)
                 for evidencia in evidencias_F1:
                     #nombre_evidencia = f"{rut}_1.1_APT122_{evidencia}.docx"
                     nombre_evidencia = f"{nombre_para_archivo}_1.{n_indice}_APT122_{evidencia}.docx"
-                    registro = [sede, seccion, docente[0], rut, nombre_completo, 1, nombre_evidencia, "NO"]
+                    registro = [sede, seccion, docente[0], rut, nombre_completo, 1, nombre_evidencia.lower(), "NO"]
                     lst_evidencias.append(registro)
                     n_indice += 1
                 n_indice = 1
                 for evidencia in evidencias_F2:
                     #nombre_evidencia = f"{rut}_2.1_APT122_{evidencia}.docx"
                     nombre_evidencia = f"{nombre_para_archivo}_2.{n_indice}_APT122_{evidencia}.docx"
-                    registro = [sede, seccion, docente[0], rut, nombre_completo, 2, nombre_evidencia, "NO"]
+                    registro = [sede, seccion, docente[0], rut, nombre_completo, 2, nombre_evidencia.lower(), "NO"]
                     lst_evidencias.append(registro)
                     n_indice += 1
                 n_indice = 1
                 for evidencia in evidencias_F3:
                     #nombre_evidencia = f"{rut}_3.1_APT122_{evidencia}.docx"
                     nombre_evidencia = f"{nombre_para_archivo}_3.{n_indice}_APT122_{evidencia}.docx"
-                    registro = [sede, seccion, docente[0], rut, nombre_completo, 3, nombre_evidencia, "NO"]
+                    registro = [sede, seccion, docente[0], rut, nombre_completo, 3, nombre_evidencia.lower(), "NO"]
                     lst_evidencias.append(registro)
                     n_indice += 1
 
@@ -104,7 +106,7 @@ def generate_equipos(folder : str, archivo_equipos : str, generate_folder : str,
                 # Evidencias grupales
                 for fase in list(enumerate([evidencias_grupales_F1, evidencias_grupales_F2, evidencias_grupales_F3], start=1)):                
                     for evidencia in fase[1]:                        
-                        registro = [sede, seccion, docente[0], equipo[0], fase[0], evidencia, "NO"]
+                        registro = [sede, seccion, docente[0], equipo[0], fase[0], evidencia.lower(), "NO"]
                         lst_evidencias_grupales.append(registro)                        
 
     resumen_evidencias_grupales = pd.DataFrame(lst_evidencias_grupales, columns=["sede","seccion","docente", "equipo", "fase",
@@ -141,7 +143,7 @@ def generate_files(folder : str, archivo_inscritos: str, generate_folder : str):
             docente = data_asignatura.query(f"sede_alumno == '{sede}' and sección == '{seccion}'")['docente'].unique()                
         
             for estudiante in data_asignatura.query(s_query)[['lastname', 'firstname', 'password']].values.tolist():
-                registro = [sede, seccion, docente[0], estudiante[2], estudiante[0] + " " + estudiante[1], 0]
+                registro = [sede, seccion, docente[0], estudiante[2], normalizar(estudiante[0] + " " + estudiante[1]), 0]
                 lst_estudiantes.append(registro)
 
     data_equipos = pd.DataFrame(lst_estudiantes, columns=["sede","seccion","docente", "rut_estudiante", "estudiante","equipo"])

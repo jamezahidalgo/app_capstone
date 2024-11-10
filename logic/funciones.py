@@ -6,6 +6,7 @@ import os
 import openpyxl
 import json
 import shutil
+import re
 
 import subprocess
 import unicodedata
@@ -71,25 +72,25 @@ def generar_nombre_unico(ruta: str) -> str:
         contador += 1
     return ruta
 
-def normalizar(texto : str) -> str:
-    """Elimina tildes y reemplaza 'ñ' o 'Ñ' por 'n'."""
+def normalizar(texto: str) -> str:
+    """Elimina tildes y reemplaza 'ñ' o 'Ñ' por 'n', convierte a minúsculas."""
     # Normaliza el texto para separar los diacríticos
-    texto_normalizado = unicodedata.normalize('NFD', texto)
+    texto_normalizado = unicodedata.normalize('NFD', texto.lower())
     # Elimina los diacríticos (caracteres con categoría 'Mn')
     texto_sin_tildes = ''.join(c for c in texto_normalizado if unicodedata.category(c) != 'Mn')
     # Reemplaza 'ñ' y 'Ñ' por 'n'
-    texto_sin_tildes = texto_sin_tildes.replace('ñ', 'n').replace('Ñ', 'N')
-    return texto_sin_tildes
+    return texto_sin_tildes.replace('ñ', 'n').replace('Ñ', 'N').lower()
 
 def renombrar_archivos_directorio(directorio):
     # Obtiene los archivos de la carpeta
     for root, _, files in os.walk(directorio):
         # Revisión de archivos
         for filename in files:
-            nuevo_nombre = normalizar(filename)
-            if nuevo_nombre != filename:  # Renombra sólo si hay cambios
-                ruta_vieja = os.path.join(root, filename)
-                ruta_nueva = os.path.join(root, nuevo_nombre)
+            nuevo_nombre = normalizar(filename.lower())
+            ruta_vieja = os.path.join(root, filename.lower())
+            ruta_nueva = os.path.join(root, nuevo_nombre)
+
+            if ruta_vieja != ruta_nueva:  # Renombra sólo si hay cambios
                 # Verifica si existe un archivo con el mismo nombre normalizado.
                 if os.path.exists(ruta_nueva):
                     ruta_nueva = generar_nombre_unico(ruta_nueva)                
@@ -97,7 +98,7 @@ def renombrar_archivos_directorio(directorio):
                 os.rename(ruta_vieja, ruta_nueva)
                 #print(f'Renombrado: {ruta_vieja} -> {ruta_nueva}')
 
-def clonar_repositorio(git_url : str, destino : str):
+def clonar_repositorio(git_url : str, destino : str, logging):
     """
     Clona un repositorio Git dado el URL del repositorio y la ruta de destino.
     
@@ -121,15 +122,62 @@ def clonar_repositorio(git_url : str, destino : str):
         # Elimina tildes y reemplaza las ñ por n de los nombres de archivos en el repositorio clonado
         renombrar_archivos_directorio(destino)
 
-        print(f"Repositorio clonado en {destino}")
+        logging.info(f"Repositorio clonado en {destino}")
         
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Error al clonar el repositorio: {e}")
+        logging.error(f"Error al clonar el repositorio {destino}: {e}")
         return False
 
+def obtener_ruta_directorio_real(ruta_directorio):
+    """Obtiene la ruta real del directorio ignorando mayúsculas y minúsculas."""
+    directorio_padre, nombre_directorio = os.path.split(ruta_directorio)
+    
+    # Si el directorio padre no existe, devuelve None
+    if not os.path.isdir(directorio_padre):
+        return None
+    
+    # Busca en el directorio padre ignorando mayúsculas
+    for item in os.listdir(directorio_padre):
+        if item.lower() == nombre_directorio.lower() and os.path.isdir(os.path.join(directorio_padre, item)):
+            return os.path.join(directorio_padre, item)
+    
+    return None
+
+def archivo_existe_independiente_mayusculas(ruta_directorio : str, nombre_archivo : str, logging):
+    """Verifica si un archivo existe en el directorio ignorando mayúsculas/minúsculas."""
+    # Obtiene la ruta correcta del directorio
+    ruta_directorio_real = obtener_ruta_directorio_real(ruta_directorio)
+    
+    # Verifica que el directorio exista
+    if ruta_directorio_real is None:        
+        logging.error(f"No existe directorio: {ruta_directorio}")
+        return False
+    
+    # Busca el archivo en el directorio con nombres en minúsculas
+    nombre_archivo = nombre_archivo.lower()
+    for archivo in os.listdir(ruta_directorio_real):
+        if archivo.lower() == nombre_archivo:
+            return True
+    return False
+
+
+def directorio_existe_ignorar_mayusculas(ruta_directorio : str):
+    # Obtiene la ruta al directorio padre
+    directorio_padre, nombre_directorio = os.path.split(ruta_directorio)
+    
+    # Si el directorio padre no existe, el directorio tampoco
+    if not os.path.isdir(directorio_padre):
+        return False
+    
+    # Busca en el directorio padre, ignorando mayúsculas
+    for item in os.listdir(directorio_padre):
+        if item.lower() == nombre_directorio.lower() and os.path.isdir(os.path.join(directorio_padre, item)):
+            return True
+    return False    
+
 def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, sede : str,
-                                     seccion : str, equipo : str, fase : int, verbose=False):
+                                     seccion : str, equipo : str, fase : int, logging, verbose=False):
     file_path = os.path.join("generate", source_file)  
     evidencias = pd.read_excel(file_path, sheet_name="individuales")
     evidencias_grupales = pd.read_excel(file_path, sheet_name="grupales")
@@ -141,65 +189,71 @@ def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, s
         (source['equipo'] == equipo)
     )
     # Definir las extensiones válidas
-    extensiones_validas_doc = ['.doc', '.docx', '.pdf']
-    extensiones_validas_planillas = ['.xls', '.xlsx']
+    extensiones_validas_doc = ['doc', 'pdf']
+    extensiones_validas_planillas = ['xls']
     # Obtener el listado de estudiantes que cumplen con los criterios
     estudiantes_filtrados = source[filtro]['estudiante'].tolist()   
-    for estudiante in estudiantes_filtrados:
+    logging.info(f"{sede}-{seccion}-{equipo} tiene {len(estudiantes_filtrados)} estudiantes")
+    for numero, estudiante in enumerate(estudiantes_filtrados):
+        estudiante = normalizar(estudiante)
         filtro_evidencias = (
             (evidencias['sede'] == sede) &
             (evidencias['seccion'] == seccion) &
-            (evidencias['estudiante'] == estudiante) &
+            (evidencias['estudiante'] == estudiante.lower()) &
             (evidencias['fase'] == fase)
         )       
         evidencias_filtradas = evidencias[filtro_evidencias]['evidencia'].tolist()
+        logging.info(f"Estudiante {numero+1}: {estudiante}")
         prefijo = f"descargas/{sede}/{seccion}/equipo-{equipo}"
-        for x_evidencia in evidencias_filtradas:
+        for x_evidencia in evidencias_filtradas:                        
             ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), x_evidencia.lower())
-            # Verifica si existe la evidencia definida en el estándar
-            if not os.path.exists(ruta_completa_archivo):
-                evidencia_sin_extension = x_evidencia.split(".")[0]
-                # Verifica si se trata de un documento
-                if x_evidencia.lower().endswith("docx"):
-                    todo_correcto = False
-                    for ext in extensiones_validas_doc:
-                        other_name = f"{evidencia_sin_extension}.{ext}"
-                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), other_name.lower())
-                        if os.path.exists(ruta_completa_archivo_n):
-                            todo_correcto = True                            
-                            break  
-                elif x_evidencia.lower().endswith("xlsx"):
-                    todo_correcto = False
-                    for ext in extensiones_validas_planillas:
-                        other_name = f"{evidencia_sin_extension}.{ext}"
-                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), other_name.lower())
-                        if os.path.exists(ruta_completa_archivo_n):
-                            todo_correcto = True                            
-                            break                                       
-                if verbose and not todo_correcto:
-                    print(f"Archivo faltante: {ruta_completa_archivo}")
-                if verbose and todo_correcto:
-                    print(f"Archivo OK: {ruta_completa_archivo}")                
+            # Verifica si existe la evidencia definida en el estándar            
+            ruta_directorio = f"{prefijo}/Fase {fase}/Evidencias individuales"
+            if not archivo_existe_independiente_mayusculas(ruta_directorio, x_evidencia, logging):
+                evidencia_sin_extension = x_evidencia.lower().split(".")[0] + "." + x_evidencia.lower().split(".")[1]
+                # Verifica si se trata de un documento                
+                todo_correcto = False
+                for ext in extensiones_validas_doc:
+                    #ruta_directorio = f"{prefijo}/Fase {fase}/Evidencias individuales".lower()
+                    other_name = f"{evidencia_sin_extension}.{ext}"
+                    ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), other_name.lower())
+                    
+                    if archivo_existe_independiente_mayusculas(ruta_directorio, other_name, logging):                    
+                        todo_correcto = True     
+                        logging.info(f"Archivo {ruta_completa_archivo_n} encontrado con extensión {ext}")                            
+                        evidencias.iloc[evidencias.index[evidencias['evidencia'] == x_evidencia.lower()].tolist()[0],7] = "OK"                       
+                        break 
+                if not todo_correcto:
+                    logging.error(f"Archivo faltante {ruta_completa_archivo} (con ninguna extensión posible)")                                       
             else:
-                if verbose:
-                    print(f"Archivo OK: {ruta_completa_archivo}")
                 todo_correcto = True
-            # Marca la evidencia como entregada
-            if todo_correcto:
-                evidencias.iloc[evidencias.index[evidencias['evidencia'] == x_evidencia].tolist()[0],7] = "OK"
+                logging.info(f"Archivo encontrado {ruta_completa_archivo}")
+
+                evidencias.iloc[evidencias.index[evidencias['evidencia'] == x_evidencia.lower()].tolist()[0],7] = "OK"            
     
     with pd.ExcelWriter(file_path) as writer:
         evidencias.to_excel(writer, sheet_name="individuales", index=False)        
         evidencias_grupales.to_excel(writer, sheet_name="grupales", index=False)
 
+def verificar_archivo_presentacion(directorio : str):
+    # Expresión regular para archivos que comiencen con la frase y tengan las extensiones .pdf, .pptx, o .ppt
+    patron = re.compile(r'^presentacion\s+idea\s+de\s+proyecto.*\.(pdf|pptx|ppt)$', re.IGNORECASE)
+    try:
+        for archivo in os.listdir(directorio):
+            archivo_normalizado = normalizar(archivo.lower())  # Normaliza para quitar tildes y pasar a minúsculas
+            if patron.match(archivo_normalizado):  # Usamos match para verificar al inicio
+                return True
+    except FileNotFoundError:
+        return False
+
 def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede : str,
-                                     seccion : str, equipo : str, fase : int, verbose = False):
+                                     seccion : str, equipo : str, fase : int, logging, verbose = False):
     
     file_path = os.path.join("generate", source_file)  
     evidencias = pd.read_excel(file_path, sheet_name="individuales")
     evidencias_grupales = pd.read_excel(file_path, sheet_name="grupales")
 
-    extensiones_validas_planillas = ['.xls', '.xlsx']
+    extensiones_validas_planillas = ['.xlsx', '.xls']
     # Filtro de los equipos
     filtro = (
         (source['sede'] == sede) &
@@ -216,73 +270,46 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     # Filtra las evidencias del equipo y la fase
     evidencias_equipo = evidencias_grupales[filtro_evidencias]['evidencia'].tolist()
     prefijo = f"descargas/{sede}/{seccion}/equipo-{equipo}"
+    ruta_directorio = f"{prefijo}/Fase {fase}/Evidencias grupales"
     for x_evidencia in evidencias_equipo:
         # Verifica si se trata de la planilla de notas
-        if x_evidencia.startswith("Planilla"):            
+        if x_evidencia.lower().startswith("Planilla"):                        
             ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
-            if not os.path.exists(ruta_completa_archivo):
-                #ruta_reemplazada = x_evidencia.replace("cion", "ción") 
-                #ruta_completa_archivo_r = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), 
-                                                       #ruta_reemplazada.lower())
+            if not archivo_existe_independiente_mayusculas(ruta_directorio, x_evidencia, logging):
                 evidencia_sin_extension = x_evidencia.split(".")[0]
                 if x_evidencia.lower().endswith("xlsx"):
                     todo_correcto = False
                     for ext in extensiones_validas_planillas:
                         other_name = f"{evidencia_sin_extension}.{ext}"
-                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias individuales".lower(), other_name.lower())
-                        if os.path.exists(ruta_completa_archivo_n):
+                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), other_name.lower())
+                        if archivo_existe_independiente_mayusculas(ruta_directorio, other_name, logging):
                             todo_correcto = True                            
                             break                                                          
                 if todo_correcto:
                     # Marca la evidencia como entregada
-                    evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == ruta_reemplazada) &
+                    evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia.lower()) &
                                                                      (evidencias_grupales['equipo'] == equipo) &
                                                                (evidencias_grupales['sede'] == sede) &
                                                                (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"            
 
             else: 
                 todo_correcto = True        
-                if verbose: 
-                    print(f"Archivo OK: {ruta_completa_archivo}")
                 # Marca la evidencia como entregada
-                evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia) &
+                evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia.lower()) &
                                                                      (evidencias_grupales['equipo'] == equipo) &
                                                                (evidencias_grupales['sede'] == sede) &
-                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"            
+                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"                    
         # Verifica si se trata del archivo de la presentación
-        if x_evidencia.startswith("Presentación") or x_evidencia.startswith("Presentacion"):
-            archivo_sin_extension = x_evidencia
-            for extension in ['.pdf', '.pptx']:
-                x_evidencia = archivo_sin_extension + extension   
-                ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
-                if not os.path.exists(ruta_completa_archivo):
-                    if verbose: 
-                        print(f"Archivo faltante: {ruta_completa_archivo}")
-                    todo_correcto = False            
-                else:
-                    if verbose: 
-                        print(f"Archivo OK: {ruta_completa_archivo}")
-                    # Marca la evidencia como entregada
-                    evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == archivo_sin_extension) &
+        if x_evidencia.lower().startswith("presentación") or x_evidencia.lower().startswith("presentacion"):            
+            if verificar_archivo_presentacion(ruta_directorio):
+                logging.info(f"{ruta_directorio}/{x_evidencia} (pdf | pptx | ppt) encontrado")
+                # Marca la evidencia como entregada
+                evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia.lower()) &
                                                                      (evidencias_grupales['equipo'] == equipo) &
                                                                (evidencias_grupales['sede'] == sede) &
                                                                (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"                 
-                    
-                    break
-        else:    
-            ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
-            if not os.path.exists(ruta_completa_archivo):
-                if verbose:
-                    print(f"Archivo faltante: {ruta_completa_archivo}")
-                todo_correcto = False            
             else:
-                if verbose:
-                    print(f"Archivo OK: {ruta_completa_archivo}")
-                # Marca la evidencia como entregada
-                evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia) &
-                                                                     (evidencias_grupales['equipo'] == equipo) &
-                                                               (evidencias_grupales['sede'] == sede) &
-                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"            
+                logging.error(f"'{ruta_directorio}/{x_evidencia}' (pdf | pptx | ppt) faltante")
     
     with pd.ExcelWriter(file_path) as writer:
         evidencias.to_excel(writer, sheet_name="individuales", index=False)        
@@ -296,7 +323,7 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     
     return True
 
-def revision_repositorio(source : pd.DataFrame, sede : str, verbose = False):
+def revision_repositorio(source : pd.DataFrame, sede : str, logging, clonar : bool, verbose = False):
     """
     Revisa el estado de los repositorios contenidos en el dataframe indicado
 
@@ -321,27 +348,35 @@ def revision_repositorio(source : pd.DataFrame, sede : str, verbose = False):
         equipo = row['equipo']
         repositorio = row['enlace']
                     
-        # Comprobar si la columna de repositorio es NaN
-        
-        if not pd.isna(repositorio):
+        # Comprobar si la columna de repositorio es NaN y que se tenga número de equipo        
+        if not pd.isna(repositorio) and equipo > 0:
             if verbose:
-                print(f"Sede: {sede}, Sección {seccion}, Equipo: {equipo}, Repositorio: {repositorio}")
+                print(f"\tSede: {sede}, Sección {seccion}, Equipo: {equipo}, Repositorio: {repositorio}")
             path_destino = f"descargas/{sede}/{seccion}/equipo-{equipo}"
-            if clonar_repositorio(repositorio, path_destino):
+            clonado = True
+            if clonar and clonar_repositorio(repositorio, path_destino, logging):
                 log_repositorios.append([repositorio, path_destino])
-                # Revisión de evidencias por fase
-                for fase in range(1,4):
-                    if revision_evidencias_individuales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo, fase, verbose):
-                        total_estructura_correcta+=1
-                    total+=1
-                    # Revisión de evidencias grupales
-                    if revision_evidencias_grupales(f"resumen_evidencias_{sede}.xlsx", source, sede, seccion, equipo, fase, verbose):
-                        total_estructura_correcta+=1
-            else:
+                # Log de éxito
+                logging.info(f"Repositorio clonado y revisado con éxito en {path_destino}")
+            elif clonar:
                 log_repositorios.append([repositorio, f'Error al clonar: {seccion}/equipo-{equipo}'])
+                git_error = f"{seccion}/equipo-{equipo}"
+                logging.error(f"Error al clonar el repositorio {git_error} en {path_destino}")
+                clonado = False
+            if not clonado:
+                continue
+            # Revisión de evidencias por fase
+            for fase in range(1,4):
+                if revision_evidencias_individuales(f"resumen_evidencias_{sede}.xlsx", source, 
+                                                        sede, seccion, equipo, fase, logging, verbose):
+                    total_estructura_correcta+=1
+                total+=1
+                # Revisión de evidencias grupales
+                if revision_evidencias_grupales(f"resumen_evidencias_{sede}.xlsx", source, sede, 
+                                                seccion, equipo, fase, logging, verbose):
+                    total_estructura_correcta+=1
         else:
             total_sin_informar+=1
-    
 
     return total, total_sin_informar, source.query("equipo == 0")[['sede', 'seccion','docente', 'rut_estudiante', 'estudiante']], log_repositorios    
 
