@@ -254,6 +254,7 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     evidencias_grupales = pd.read_excel(file_path, sheet_name="grupales")
 
     extensiones_validas_planillas = ['.xlsx', '.xls']
+    
     # Filtro de los equipos
     filtro = (
         (source['sede'] == sede) &
@@ -273,7 +274,7 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
     ruta_directorio = f"{prefijo}/Fase {fase}/Evidencias grupales"
     for x_evidencia in evidencias_equipo:
         # Verifica si se trata de la planilla de notas
-        if x_evidencia.lower().startswith("Planilla"):                        
+        if x_evidencia.lower().startswith("planilla"):                        
             ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
             if not archivo_existe_independiente_mayusculas(ruta_directorio, x_evidencia, logging):
                 evidencia_sin_extension = x_evidencia.split(".")[0]
@@ -310,7 +311,63 @@ def revision_evidencias_grupales(source_file : str, source : pd.DataFrame, sede 
                                                                (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"                 
             else:
                 logging.error(f"'{ruta_directorio}/{x_evidencia}' (pdf | pptx | ppt) faltante")
-    
+        # Verifica si se trata de los documentos
+        if x_evidencia.lower().endswith("docx"): 
+            todo_correcto = False
+            if x_evidencia.lower().endswith("(espanol).docx"):
+                # Busca con el patron
+                if x_evidencia.startswith("1.5"):
+                    patron = re.compile(r'^1.5_GuiaEstudiante_Fase\s+1_Definicion\s+proyecto\s+apt.*\.(pdf|docx|doc)$', re.IGNORECASE)
+                if x_evidencia.startswith("2.4"):
+                    # 2.4_GuiaEstudiante_Fase 2_DesarrolloProyecto APT
+                    patron = re.compile(r'^2.4_GuiaEstudiante_Fase\s+2_DesarrolloProyecto\s+apt.*\.(pdf|docx|doc)$', re.IGNORECASE)                                    
+                if x_evidencia.startswith("2.6"):
+                    # 2.6_GuiaEstudiante_Fase 2_Informe Final Proyecto APT (Espanol).docx
+                    patron = re.compile(r'^2.6_GuiaEstudiante_Fase\s+2_informe\s+final\s+proyecto\s+apt.*\.(pdf|docx|doc)$', re.IGNORECASE)                                    
+
+                try:
+                    ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
+                    for archivo in os.listdir(ruta_directorio):
+                        archivo_normalizado = normalizar(archivo.lower())  # Normaliza para quitar tildes y pasar a minúsculas
+                        if patron.match(archivo_normalizado):  # Usamos match para verificar al inicio
+                            logging.info(f"Archivo {ruta_completa_archivo} encontrado con o sin el sufijo espanol")                            
+                            # Marca la evidencia como entregada
+                            evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia.lower()) &
+                                                                     (evidencias_grupales['equipo'] == equipo) &
+                                                               (evidencias_grupales['sede'] == sede) &
+                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"
+                            todo_correcto = True
+                            break
+                except FileNotFoundError:
+                    pass  
+                if not todo_correcto:
+                    logging.error(f"Archivo {ruta_completa_archivo} faltante")        
+            else:
+                
+                ruta_completa_archivo = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), x_evidencia.lower())
+                extensiones_validas_doc = ['doc', 'pdf']
+                if archivo_existe_independiente_mayusculas(ruta_directorio, x_evidencia, logging):
+                    logging.info(f"Archivo {ruta_completa_archivo} encontrado")                            
+                    # Marca la evidencia como entregada
+                    evidencias_grupales.iloc[evidencias_grupales.index[((evidencias_grupales['evidencia'] == x_evidencia.lower()) &
+                                                                     (evidencias_grupales['equipo'] == equipo) &
+                                                               (evidencias_grupales['sede'] == sede) &
+                                                               (evidencias_grupales['seccion'] == seccion))].tolist()[0],6] = "OK"
+                else:
+                    todo_correcto = False
+                    evidencia_sin_extension = x_evidencia.split(".")[0]
+                    for ext in extensiones_validas_doc:
+                        other_name = f"{evidencia_sin_extension}.{ext}"
+                        ruta_completa_archivo_n = os.path.join(f"{prefijo}/Fase {fase}/Evidencias grupales".lower(), other_name.lower())
+                    
+                        if archivo_existe_independiente_mayusculas(ruta_directorio, other_name, logging):                    
+                            todo_correcto = True     
+                            logging.info(f"Archivo {ruta_completa_archivo_n} encontrado con extensión {ext}")                            
+                            evidencias.iloc[evidencias.index[evidencias['evidencia'] == x_evidencia.lower()].tolist()[0],7] = "OK"                       
+                            break 
+                    if not todo_correcto:
+                        logging.error(f"Archivo {ruta_completa_archivo} faltante")     
+                
     with pd.ExcelWriter(file_path) as writer:
         evidencias.to_excel(writer, sheet_name="individuales", index=False)        
         evidencias_grupales.to_excel(writer, sheet_name="grupales", index=False)
