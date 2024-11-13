@@ -236,6 +236,10 @@ def revision_evidencias_individuales(source_file : str, source : pd.DataFrame, s
         evidencias_grupales.to_excel(writer, sheet_name="grupales", index=False)
 
 def verificar_archivo_presentacion(directorio : str):
+    # Verifica si el directorio existe
+    if not os.path.isdir(directorio):
+        return False
+    
     # Expresión regular para archivos que comiencen con la frase y tengan las extensiones .pdf, .pptx, o .ppt
     patron = re.compile(r'^presentacion\s+idea\s+de\s+proyecto.*\.(pdf|pptx|ppt)$', re.IGNORECASE)
     try:
